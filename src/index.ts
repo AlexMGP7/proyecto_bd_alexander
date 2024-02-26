@@ -106,6 +106,115 @@ app.post("/boards", async (req: Request, res: Response) => {
   }
 });
 
+// Ruta para obtener todos los usuarios asociados a un tablero específico
+app.get("/boards/:boardId/users", async (req: Request, res: Response) => {
+  const { boardId } = req.params;
+  try {
+    const text = "SELECT id, isAdmin, userId FROM board_users WHERE boardId = $1";
+    const values = [boardId];
+    const result = await pool.query(text, values);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    return res.status(400).json(errors);
+  }
+});
+
+// Ruta para asociar un usuario a un tablero como administrador
+app.post("/boards/:boardId/users", async (req: Request, res: Response) => {
+  const { boardId } = req.params;
+  const { userId, isAdmin } = req.body;
+  try {
+    const text = "INSERT INTO board_users(boardId, userId, isAdmin) VALUES($1, $2, $3) RETURNING *";
+    const values = [boardId, userId, isAdmin];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    return res.status(422).json(errors);
+  }
+});
+
+// Ruta para obtener todas las listas de un tablero específico
+app.get("/boards/:boardId/lists", async (req: Request, res: Response) => {
+  const { boardId } = req.params;
+  try {
+    const text = "SELECT id, name FROM lists WHERE board_id = $1";
+    const values = [boardId];
+    const result = await pool.query(text, values);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    return res.status(400).json(errors);
+  }
+});
+
+// Ruta para crear una nueva lista en un tablero específico
+app.post("/boards/:boardId/lists", async (req: Request, res: Response) => {
+  const { boardId } = req.params;
+  const { name } = req.body;
+  try {
+    const text = "INSERT INTO lists(name, board_id) VALUES($1, $2) RETURNING *";
+    const values = [name, boardId];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    return res.status(422).json(errors);
+  }
+});
+
+// Ruta para obtener todas las tarjetas de una lista específica
+app.get("/lists/:listId/cards", async (req: Request, res: Response) => {
+  const { listId } = req.params;
+  try {
+    const text = "SELECT id, title, description, due_date FROM cards WHERE list_id = $1";
+    const values = [listId];
+    const result = await pool.query(text, values);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    return res.status(400).json(errors);
+  }
+});
+
+// Ruta para crear una nueva tarjeta en una lista específica
+app.post("/lists/:listId/cards", async (req: Request, res: Response) => {
+  const { listId } = req.params;
+  const { title, description, due_date } = req.body;
+  try {
+    const text = "INSERT INTO cards(title, description, due_date, list_id) VALUES($1, $2, $3, $4) RETURNING *";
+    const values = [title, description, due_date, listId];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    return res.status(422).json(errors);
+  }
+});
+
+// Ruta para obtener todos los usuarios asociados a una tarjeta específica
+app.get("/cards/:cardId/users", async (req: Request, res: Response) => {
+  const { cardId } = req.params;
+  try {
+    const text = "SELECT user_id, is_owner FROM card_users WHERE card_id = $1";
+    const values = [cardId];
+    const result = await pool.query(text, values);
+    res.status(200).json(result.rows);
+  } catch (errors) {
+    return res.status(400).json(errors);
+  }
+});
+
+// Ruta para asociar un usuario a una tarjeta como propietario
+app.post("/cards/:cardId/users", async (req: Request, res: Response) => {
+  const { cardId } = req.params;
+  const { userId, is_owner } = req.body;
+  try {
+    const text = "INSERT INTO card_users(card_id, user_id, is_owner) VALUES($1, $2, $3) RETURNING *";
+    const values = [cardId, userId, is_owner];
+    const result = await pool.query(text, values);
+    res.status(201).json(result.rows[0]);
+  } catch (errors) {
+    return res.status(422).json(errors);
+  }
+});
+
+
 // Inicio del servidor Express, escuchando en el puerto especificado
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`); // Mensaje de confirmación de inicio del servidor
