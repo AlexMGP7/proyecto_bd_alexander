@@ -6,7 +6,7 @@ CREATE TABLE boards (
 CREATE TABLE users (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name VARCHAR(256) NOT NULL,
-    email VARCHAR(256) UNIQUE NOT NULL
+    email VARCHAR(256) UNIQUaE NOT NULL
 );
 
 CREATE TABLE board_users (
@@ -14,4 +14,25 @@ CREATE TABLE board_users (
     isAdmin BOOLEAN DEFAULT false,
     boardId UUID REFERENCES boards(id) ON DELETE CASCADE ON UPDATE CASCADE,
     userId UUID REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
-)
+);
+
+CREATE TABLE lists (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(256) NOT NULL,
+    board_id UUID REFERENCES boards(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE cards (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    title VARCHAR(256) NOT NULL,
+    description TEXT,
+    due_date DATE,
+    list_id UUID REFERENCES lists(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE card_users (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    card_id UUID REFERENCES cards(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    is_owner BOOLEAN DEFAULT false
+);

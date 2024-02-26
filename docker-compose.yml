@@ -9,9 +9,11 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@udo.com
       PGADMIN_DEFAULT_PASSWORD: 1234
     ports:
-      - 8080:80
+      - "8080:80"
     logging:
       driver: none
+    networks:
+      - udo-api-network
 
   # API Gateway PostgreSQL service.
   matic-postgres:
@@ -22,7 +24,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
     ports:
-      - 5433:5432
+      - "5433:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-d", "postgres", "-U", "postgres"]
       interval: 30s
@@ -31,11 +33,13 @@ services:
     command: ["postgres", "-c", "log_statement=all"]
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - udo-api-network
 
 volumes:
   pgdata:
     driver: local
 
 networks:
-  default:
+  udo-api-network:
     name: udo-api-network
