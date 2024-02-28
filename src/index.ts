@@ -9,7 +9,11 @@ import "reflect-metadata"; // Módulo para trabajar con metadatos de clases y pr
 
 // Importación de clases DTO (Data Transfer Object)
 import { Board } from "./dto/board.dto"; // Clase DTO para representar datos de tableros
-import { User } from "./dto/user.dto"; // Clase DTO para representar datos de usuarios
+import { User } from "./dto/user.dto"; // Clase DTO para representar datos de
+import { List } from "./dto/list.dto"; // Clase DTO para representar datos de listas
+import { Card } from "./dto/card.dto"; // Clase DTO para representar datos de tarjetas
+import { BoardUser } from "./dto/board_users.dto"; // Clase DTO para representar datos de usuarios asociados a tableros
+import { CardUser } from "./dto/card_user.dto"; // Clase DTO para representar datos de usuarios asociados a tarjetas
 
 // Carga de variables de entorno desde el archivo .env
 dotenv.config();
@@ -110,7 +114,8 @@ app.post("/boards", async (req: Request, res: Response) => {
 app.get("/boards/:boardId/users", async (req: Request, res: Response) => {
   const { boardId } = req.params;
   try {
-    const text = "SELECT id, isAdmin, userId FROM board_users WHERE boardId = $1";
+    const text =
+      "SELECT id, isAdmin, userId FROM board_users WHERE boardId = $1";
     const values = [boardId];
     const result = await pool.query(text, values);
     res.status(200).json(result.rows);
@@ -122,13 +127,30 @@ app.get("/boards/:boardId/users", async (req: Request, res: Response) => {
 // Ruta para asociar un usuario a un tablero como administrador
 app.post("/boards/:boardId/users", async (req: Request, res: Response) => {
   const { boardId } = req.params;
-  const { userId, isAdmin } = req.body;
+
+  // Agregar boardId al cuerpo de la solicitud
+  req.body.boardId = boardId;
+
+  // Crear una instancia del DTO BoardUserDTO con los datos de la solicitud
+  const boardUserDTO: BoardUser = plainToClass(BoardUser, req.body);
+
   try {
-    const text = "INSERT INTO board_users(boardId, userId, isAdmin) VALUES($1, $2, $3) RETURNING *";
+    // Validar el DTO
+    await validateOrReject(boardUserDTO);
+
+    // Extraer los datos del DTO para su uso en la consulta SQL
+    const { userId, isAdmin } = boardUserDTO;
+
+    // Realizar la consulta SQL con los datos validados del DTO
+    const text =
+      "INSERT INTO board_users(boardId, userId, isAdmin) VALUES($1, $2, $3) RETURNING *";
     const values = [boardId, userId, isAdmin];
     const result = await pool.query(text, values);
+
+    // Enviar la respuesta con el resultado de la consulta
     res.status(201).json(result.rows[0]);
   } catch (errors) {
+    // Enviar una respuesta de error en caso de que la validación falle
     return res.status(422).json(errors);
   }
 });
@@ -146,11 +168,17 @@ app.get("/boards/:boardId/lists", async (req: Request, res: Response) => {
   }
 });
 
-// Ruta para crear una nueva lista en un tablero específico
 app.post("/boards/:boardId/lists", async (req: Request, res: Response) => {
   const { boardId } = req.params;
-  const { name } = req.body;
+
+  // Agregar boardId al cuerpo de la solicitud
+  req.body.board_id = boardId;
+  const listDto: List = plainToClass(List, req.body);
+
   try {
+    await validateOrReject(listDto);
+
+    const { name } = listDto;
     const text = "INSERT INTO lists(name, board_id) VALUES($1, $2) RETURNING *";
     const values = [name, boardId];
     const result = await pool.query(text, values);
@@ -164,7 +192,8 @@ app.post("/boards/:boardId/lists", async (req: Request, res: Response) => {
 app.get("/lists/:listId/cards", async (req: Request, res: Response) => {
   const { listId } = req.params;
   try {
-    const text = "SELECT id, title, description, due_date FROM cards WHERE list_id = $1";
+    const text =
+      "SELECT id, title, description, due_date FROM cards WHERE list_id = $1";
     const values = [listId];
     const result = await pool.query(text, values);
     res.status(200).json(result.rows);
@@ -176,9 +205,17 @@ app.get("/lists/:listId/cards", async (req: Request, res: Response) => {
 // Ruta para crear una nueva tarjeta en una lista específica
 app.post("/lists/:listId/cards", async (req: Request, res: Response) => {
   const { listId } = req.params;
-  const { title, description, due_date } = req.body;
+
+  // Agregar listId al cuerpo de la solicitud
+  req.body.list_id = listId;
+  const cardDto: Card = plainToClass(Card, req.body);
+
   try {
-    const text = "INSERT INTO cards(title, description, due_date, list_id) VALUES($1, $2, $3, $4) RETURNING *";
+    await validateOrReject(cardDto);
+
+    const { title, description, due_date } = cardDto;
+    const text =
+      "INSERT INTO cards(title, description, due_date, list_id) VALUES($1, $2, $3, $4) RETURNING *";
     const values = [title, description, due_date, listId];
     const result = await pool.query(text, values);
     res.status(201).json(result.rows[0]);
@@ -203,9 +240,17 @@ app.get("/cards/:cardId/users", async (req: Request, res: Response) => {
 // Ruta para asociar un usuario a una tarjeta como propietario
 app.post("/cards/:cardId/users", async (req: Request, res: Response) => {
   const { cardId } = req.params;
-  const { userId, is_owner } = req.body;
+
+  // Agregar cardId al cuerpo de la solicitud
+  req.body.card_id = cardId;
+  const cardUserDto: CardUser = plainToClass(CardUser, req.body);
+
   try {
-    const text = "INSERT INTO card_users(card_id, user_id, is_owner) VALUES($1, $2, $3) RETURNING *";
+    await validateOrReject(cardUserDto);
+
+    const { userId, is_owner } = cardUserDto;
+    const text =
+      "INSERT INTO card_users(card_id, user_id, is_owner) VALUES($1, $2, $3) RETURNING *";
     const values = [cardId, userId, is_owner];
     const result = await pool.query(text, values);
     res.status(201).json(result.rows[0]);
@@ -213,7 +258,6 @@ app.post("/cards/:cardId/users", async (req: Request, res: Response) => {
     return res.status(422).json(errors);
   }
 });
-
 
 // Inicio del servidor Express, escuchando en el puerto especificado
 app.listen(port, () => {

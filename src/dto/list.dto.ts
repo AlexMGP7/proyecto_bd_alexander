@@ -1,12 +1,10 @@
-import { IsAlpha, IsDefined, IsEmail, IsBoolean, IsUUID, Length } from "class-validator";
+import { IsDefined, IsUUID } from "class-validator";
 
 export class List {
-    @IsAlpha()
-    @IsDefined()
-    @Length(5, 30)
-    name: string;
-  
-    @IsUUID()
-    @IsDefined()
-    board_id: string;
-  }
+  @IsDefined()
+  name: string;
+
+  @IsDefined()
+  @IsUUID()
+  board_id: string;
+}

@@ -1,15 +1,15 @@
-import { IsAlpha, IsDefined, IsEmail, IsBoolean, IsUUID, Length } from "class-validator";
+import { IsDefined, IsBoolean, IsUUID } from "class-validator";
 
 export class CardUser {
-    @IsUUID()
-    @IsDefined()
-    card_id: string;
-  
-    @IsUUID()
-    @IsDefined()
-    user_id: string;
-  
-    @IsDefined()
-    @IsBoolean()
-    is_owner: boolean;
-  }
+  @IsUUID()
+  @IsDefined()
+  card_id: string;
+
+  @IsUUID()
+  @IsDefined()
+  userId: string;
+
+  @IsBoolean()
+  @IsDefined()
+  is_owner: boolean;
+}

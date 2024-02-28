@@ -1,16 +1,16 @@
-import { IsAlpha, IsDefined, IsEmail, IsBoolean, IsUUID, Length } from "class-validator";
+import { IsDefined, IsOptional, IsString, IsUUID } from "class-validator";
 
 export class Card {
+  @IsString()
   @IsDefined()
-  @Length(5, 50)
   title: string;
 
-  @Length(0, 255)
+  @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsDefined()
-  @IsBoolean()
-  is_owner: boolean;
+  @IsOptional()
+  due_date?: Date;
 
   @IsUUID()
   @IsDefined()
